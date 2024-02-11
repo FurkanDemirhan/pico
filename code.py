@@ -14,8 +14,9 @@ from adafruit_display_shapes.rect import Rect
 from adafruit_display_shapes.polygon import Polygon
 import analogio
 import pulseio
-WIDTH = 128
-HEIGHT = 64
+import adafruit_matrixkeypad
+WIDTH=128
+HEIGHT=64
 displayio.release_displays()
 oled_reset=board.GP20
 i2c=busio.I2C(board.GP19,board.GP18)
@@ -40,62 +41,87 @@ exled=digitalio.DigitalInOut(extra3v3led)
 exled.direction=digitalio.Direction.OUTPUT
 exled.value=False
 buzzer_pin=board.GP5
-buzzer = digitalio.DigitalInOut(buzzer_pin)
-buzzer.direction = digitalio.Direction.OUTPUT
+buzzer=digitalio.DigitalInOut(buzzer_pin)
+buzzer.direction=digitalio.Direction.OUTPUT
 trg=digitalio.DigitalInOut(board.GP6)
-trg.direction = digitalio.Direction.OUTPUT
+trg.direction=digitalio.Direction.OUTPUT
 echo=digitalio.DigitalInOut(board.GP7)
-echo.direction = digitalio.Direction.INPUT
+echo.direction=digitalio.Direction.INPUT
+row_pins=[board.GP14, board.GP15, board.GP16, board.GP17]
+col_pins=[board.GP10, board.GP11, board.GP12, board.GP13]
+keypad_layout=[
+    ['S13', 'S14', 'S15', 'S16'],
+    ['S9', 'S10', 'S11', 'S12'],
+    ['S5', 'S6', 'S7', 'S8'],
+    ['S1', 'S2', 'S3', 'S4']
+]
+row_pins_list=[digitalio.DigitalInOut(pin) for pin in row_pins]
+col_pins_list=[digitalio.DigitalInOut(pin) for pin in col_pins]
+keypad=adafruit_matrixkeypad.Matrix_Keypad(col_pins_list, row_pins_list, keypad_layout)
 def read_j1_vrx():
     return vrxjoy1.value
 def read_j1_vry():
     return vryjoy1.value
 def play_tone(frequency, duration):
-    # Calculate the time period for the given frequency
-    period = 1 / frequency
-    # Calculate half of the time period for toggling the buzzer
-    half_period = period / 2
-    # Calculate the number of cycles based on the duration
-    cycles = int(duration * frequency)
-    # Toggle the buzzer pin on and off for the specified duration
+    period=1 / frequency
+    half_period=period / 2
+    cycles=int(duration * frequency)
     for _ in range(cycles):
-        buzzer.value = True
+        buzzer.value=True
         sleep(half_period)
-        buzzer.value = False # this code is not from me its from chat-gpt 3.5
+        buzzer.value=False
         sleep(half_period)
 def get_distance():
-    trg.value = True
+    trg.value=True
     sleep(0.00001)
-    trg.value = False
+    trg.value=False
     while echo.value == False:
         pulse_start=monotonic()
     while echo.value == True:
         pulse_end=monotonic()
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 34300 / 2
+    pulse_duration=pulse_end - pulse_start
+    distance=pulse_duration * 34300 / 2
     return distance
 # Pong Merge Start
 sc1=0
 scai=0
-pong_group = displayio.Group()
+pong_group=displayio.Group()
 pad1=Rect(120,32,4,24,fill=0xFFFFFF,outline=0xFFFFFF)
 padai=Rect(4,32,4,24,fill=0xFFFFFF,outline=0xFFFFFF)
 ball=Rect(64,32,4,4,fill=0xFFFFFF,outline=0xFFFFFF)
 score=label.Label(terminalio.FONT,text=f"{scai}-{sc1}",color=0xFFFFFF,x=56,y=15)
+wtp2 = False
 def plydw():
     pad1.y+=2
 def plyup():
     pad1.y-=2
 def aidwn():
-    padai.y+=1
+    padai.y+=2
 def aiup():
-    padai.y-=1
+    padai.y-=2
 paidw=0
 paiup=0
 bally="up"
 ballx="right"
-poncedid = False
+poncedid=False
 # Pong Merge End
+# Dino Merge Start
+dino_group=displayio.Group()
+dinoplayer1=Rect(64,46,8,16, fill=0xFFFFFF,outline=0xFFFFFF)
+ground=Rect(0,63,128,2, fill=0xFFFFFF,outline=0xFFFFFF)
+block=Rect(-10,54,8,8, fill=0xFFFFFF,outline=0xFFFFFF)
+pplayer1score=0
+player1score=label.Label(terminalio.FONT, text=f"score: {pplayer1score}", x=5,y=10)
+def ply1R():
+    dinoplayer1.x+=3
+def ply1L():
+    dinoplayer1.x-=3
+onground=True
+jumping=False
+jumpicol=0
+blockdir="right"
+donce=False
+# Dino Merge End
 # Main Start
 main_group=displayio.Group()
 HY=25
@@ -137,17 +163,20 @@ select=1
 fp=True
 cl=False
 ls=False
-iss17 = False
+iss17=False
 lang=0#0=eng 1=TR
 lsbug=False
-wne = False
+wne=False
 # Main End
 Mode="Main"
 while True:
-    j1x = read_j1_vry()
-    j1y = read_j1_vrx()
+    kys=keypad.pressed_keys
+    j1x=read_j1_vry()
+    j1y=read_j1_vrx()
     distance= get_distance()
     display.refresh()
+    if kys:
+        print(kys)
     if Mode == "Main":
         freerammain=mem_free()
         usedram=freeramstart-freerammain
@@ -212,10 +241,10 @@ while True:
                         select-=1
                     if j1x < 10000:
                         select+=1
-                    if select > 20:
+                    if select > 21:
                         select=1
                     if select < 1:
-                        select=20
+                        select=21
                 display.refresh()
                 sleep(0.1)
                 if select == 1:
@@ -264,7 +293,7 @@ while True:
                     if lang == 0:
                         Htext.text="8:Open Explorer"
                     if lang == 1:
-                        Htext.text="8:Open Explorer"
+                        Htext.text="8:Explorer I Ac"
                     main_group.append(Htext)
                 if select == 9:
                     if lang == 0:
@@ -326,21 +355,27 @@ while True:
                     main_group.append(Htext)
                 if select == 18:
                     if lang == 0:
-                        Htext.text="18:Mouse Mode\nPress Joy1 To Exit"
+                        Htext.text="18:Mouse Mode\nLC=J1,RC=S16,Exit=S15"
                     if lang == 1:
-                        Htext.text="18:Fare Modu\nCIkmak icin Joy1 E Bas"
+                        Htext.text="18:Fare Modu SolT=J1\nSagT=S16,Cıkıs=S15"
                     main_group.append(Htext)
                 if select == 19:
                     if lang == 0:
-                        Htext.text="19:Mouse Mode\nWith No Exit"
+                        Htext.text="19:Play Dino"
                     if lang == 1:
-                        Htext.text="19:Fare Modu\nCIkIs yok"
+                        Htext.text="19:Dino Oyna"
                     main_group.append(Htext)
                 if select == 20:
                     if lang == 0:
                         Htext.text="20:Send Windows-Tab"
                     if lang == 1:
                         Htext.text="20:Windows-Tab Gonder"
+                    main_group.append(Htext)
+                if select == 21:
+                    if lang == 0:
+                        Htext.text="21:Play Pong\n2 Player"
+                    if lang == 1:
+                        Htext.text="21:Pong Oyna\niki Kisilik"
                     main_group.append(Htext)
             if not pin2.value or not pin4.value:
                 if fp == True:
@@ -380,6 +415,7 @@ while True:
                             CS=0.0035
                         CSUI.text=f"{CS:.4f}"
                     if select == 14:
+                        wtp2=False
                         Mode="Pong"
                     if select == 15:
                         main_group.remove(Fram)
@@ -387,19 +423,20 @@ while True:
                         main_group.append(Fram)
                     if select == 16:
                         for i in range(10):
-                            randsond = randint(1,50)
-                            randlong = uniform(1, 3.9)
+                            randsond=randint(1,50)
+                            randlong=uniform(1, 3.9)
                             print(f"freq:{randsond}\nlong:{randlong}")
                             play_tone(randsond, randlong)
                     if select == 18:
-                        wne = False
+                        wne=False
                         exec(open("mousemode.py").read(), globals())
                     if select == 19:
-                        wne = True
-                        exec(open("mousemode.py").read(), globals())
-                        wne = False
+                        Mode="Dino"
                     if select == 20:
                         exec(open("wintab.py").read())
+                    if select == 21:
+                        wtp2=True
+                        Mode="Pong"
         display.refresh()
         display.show(main_group)
     if Mode == "Pong":
@@ -410,32 +447,47 @@ while True:
             pong_group.append(pad1)
             pong_group.append(padai)
             pong_group.append(ball)
-            poncedid = True
+            poncedid=True
         sleep(0.075)
         if not pin2.value or j1y > 50000:
             if pad1.y > 38:
                 pass
             else:
-                paidw=monotonic()
+                if wtp2 == False:
+                    paidw=monotonic()
                 plydw()
         if not pin3.value or j1y < 10000:
             if pad1.y < 4:
                 pass
             else:
-                paiup=monotonic()
+                if wtp2 == False:
+                    paiup=monotonic()
                 plyup()
-        if paidw > 1 or ball.y > padai.y:
-            if padai.y > 38:
-                pass
-            else:
-                aidwn()
-            paidw=0
-        if paiup > 1 or ball.y < padai.y:
-            if padai.y < 4:
-                pass
-            else:
-                aiup()
-            paiup=0
+        if kys:
+            if "S16" in kys and wtp2 == True:
+                if padai.y > 38:
+                    pass
+                else:
+                    aidwn()
+            if "S15" in kys and wtp2 == True:
+                if padai.y < 4:
+                    pass
+                else:
+                    aiup()
+        if wtp2 == False:
+            if paidw > 1 or ball.y > padai.y:
+                if padai.y > 38:
+                    pass
+                else:
+                    aidwn()
+                paidw=0
+        if wtp2 == False:
+            if paiup > 1 or ball.y < padai.y:
+                if padai.y < 4:
+                    pass
+                else:
+                    aiup()
+                paiup=0
         if ball.x >= 130:
             play_tone(2,0.5)
             scai+=1
@@ -461,15 +513,80 @@ while True:
         if padai.y == ball.y and padai.x == ball.x:
             ballx="right"
         if ballx=="right":
-            ball.x+=4
+            ball.x+=5
         if ballx=="left":
-            ball.x-=4        
+            ball.x-=5        
         if bally=="up":
-            ball.y-=4
+            ball.y-=5
         if bally=="down":
-            ball.y+=4
+            ball.y+=5
         if not pin2.value and not pin3.value or not pin4.value:
             Mode="Main"
             sleep(1)
         display.refresh()
         display.show(pong_group)
+    if Mode == "Dino":
+        if kys:
+            if "S15" in kys:
+                Mode="Main"
+        if donce == False:
+            dino_group.append(dinoplayer1)
+            dino_group.append(ground)
+            dino_group.append(block)
+            dino_group.append(player1score)
+            donce=True
+        if dinoplayer1.y > 46:
+            dinoplayer1.y=46
+        sleep(0.05)
+        if block.y - 8 <= dinoplayer1.y <= block.y + 8 and block.x - 8 <= dinoplayer1.x <= block.x + 8:
+            play_tone(2,0.5)
+            dinoplayer1.y=16
+            pplayer1score=0
+            player1score.text=f"score: {pplayer1score}"
+        if blockdir == "right":
+            block.x+=3
+        if blockdir == "left":
+            block.x-=3
+        if block.x > 132:
+            blockdir="left"
+            pplayer1score+=1
+            player1score.text=f"score: {pplayer1score}"
+        if block.x < -13:
+            blockdir="right"
+            pplayer1score+=1
+            player1score.text=f"score: {pplayer1score}"
+        if jumpicol == 0:
+            jumping=False
+        if not pin4.value and onground == True:
+            if dinoplayer1.y <= 16:
+                pass
+            else:
+                jumping=True
+                onground=False
+        if dinoplayer1.y < 46 and jumping == False:
+            dinoplayer1.y+=3
+        if jumping == True:
+            if jumpicol < 24 and onground == False:
+                dinoplayer1.y-=3
+                jumpicol+=2
+            if onground == True:
+                jumping=True
+                jumpicol=0
+            if jumpicol == 24:
+                jumpicol=0
+                jumping=False
+        if dinoplayer1.y == 46:
+            onground=True
+            jumping=False
+        if j1x < 5000:
+            if dinoplayer1.x > 118:
+                pass
+            else:
+                ply1R()
+        if j1x > 55000:
+            if dinoplayer1.x < 1:
+                pass
+            else:
+                ply1L()
+        display.refresh()
+        display.show(dino_group)
