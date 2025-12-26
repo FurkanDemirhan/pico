@@ -1,6 +1,21 @@
-# Pico thing
-this project is in an early state i dont even have name for it XD
-i am using circuitpython with 16mb flash pico and i am using joysticks to use menu
-and oldui.py uses terminalio i am no longer using that file
-i n this project i use buzzer, 1 joystick(i have a second one too but i havent added a code for it), one HCSR04 An 128x64 SSD1306 Oled Screen and an random rgb led (and i will also add 4x4 matrix pad later)
-in this year i am learning python at 9th grade at school i am still learning and ChatGPT is Helping Me
+# About
+## history
+i made this project way back in early 9th grade because i had no friends at school and i was constantly bored
+and this kind of things such as arduino,etc was taught in 10th grade,
+which me doing this on 9th grade got my CS teacher's attention and started my arduino classes early.
+## features & stuff
+As of writing this new README.md i dont really remember a lot about the project such as wiring
+but i remember the things it had
++ Pong(single player(versus CPU) and multiplayer)
++ Chrome Dino Clone
++ act as mouse via joystick
++ do keyboard shortcuts
++ random noise via Buzzer
++ other stuff i cant remember but it includes gpio
+###parts
++ raspberry pi pico
++ SSD1306 i2c screen
++ Buttons
++ buzzer
++ analog joystick
++ other stuff i cant remember
