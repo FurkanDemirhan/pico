@@ -12,7 +12,7 @@ but i remember the things it had
 + do keyboard shortcuts
 + random noise via Buzzer
 + other stuff i cant remember but it includes gpio
-###parts
+### parts
 + raspberry pi pico
 + SSD1306 i2c screen
 + Buttons
